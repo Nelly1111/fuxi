@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>英文單字查詢工具</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input, button { padding: 10px; font-size: 16px; }
+    .result { margin-top: 20px; }
+    h3 { margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+  <h1>英文單字查詢</h1>
+  <input type="text" id="wordInput" placeholder="輸入英文單字">
+  <button onclick="lookupWord()">查詢</button>
+
+  <div class="result" id="resultBox"></div>
+
+  <script>
+    async function lookupWord() {
+      const word = document.getElementById('wordInput').value.trim();
+      const resultBox = document.getElementById('resultBox');
+      resultBox.innerHTML = '查詢中...';
+
+      const apiKey = 'YOUR_API_KEY'; // ← 請替換成你的 WordsAPI 金鑰
+      const url = `https://wordsapiv1.p.rapidapi.com/words/${word}`;
+
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'X-RapidAPI-Key': apiKey,
+            'X-RapidAPI-Host': 'wordsapiv1.p.rapidapi.com'
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.word) {
+          let html = `<h2>${data.word}</h2>`;
+
+          if (data.results) {
+            html += `<h3>定義：</h3><ul>`;
+            data.results.forEach(r => {
+              html += `<li>${r.definition}</li>`;
+            });
+            html += `</ul>`;
+
+            const synonyms = data.results.flatMap(r => r.synonyms || []);
+            if (synonyms.length > 0) {
+              html += `<h3>同義詞：</h3><p>${[...new Set(synonyms)].join(', ')}</p>`;
+            }
+
+            const examples = data.results.flatMap(r => r.examples || []);
+            if (examples.length > 0) {
+              html += `<h3>例句：</h3><ul>`;
+              examples.forEach(e => html += `<li>${e}</li>`);
+              html += `</ul>`;
+            }
+          }
+
+          resultBox.innerHTML = html;
+        } else {
+          resultBox.innerHTML = '查無此單字。';
+        }
+      } catch (error) {
+        resultBox.innerHTML = '查詢失敗，請檢查 API 金鑰或網路連線。';
+        console.error(error);
+      }
+    }
+  </script>
+</body>
+</html>
